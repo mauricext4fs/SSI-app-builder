@@ -2,13 +2,17 @@
 
 class Build {
     
-    public function parseFile($strFile = "index.shtml")
+    public function parseFile($strFile = "index.shtml", $strWorkingDir)
     {
         $strContent = "";
         $arrMatches = [];
         $i = 0;
-        $strPath = __DIR__ . "/../";
+        $strPath = $strWorkingDir . "/";
         $fs = fopen($strPath.$strFile, "r"); 
+        if (!$fs) {
+            throw new Exception (sprintf("Cannot process file: %s", $strPath.$strFile));
+        }
+        printf("Processing File: %s\n", $strPath.$strFile);
         while (!feof($fs)) {
             $strBuf = fgets($fs);
             if (strstr($strBuf, ".shtml") || strstr($strBuf, ".html")) {
@@ -17,7 +21,7 @@ class Build {
                 $strBuf = trim($strBuf);
                 $numMatches = preg_match("/\<\!--\#include file\=\"(.*)\" --\>/", $strBuf, $arrMatches);
                 if ($numMatches !== FALSE && $numMatches !== 0) {
-                    $strContent .= $this->parseFile($arrMatches[1]); 
+                    $strContent .= $this->parseFile($arrMatches[1], getcwd()); 
                 } else {
                     $strContent .= $strBuf;
                 }
@@ -30,13 +34,13 @@ class Build {
         return $strContent;
     }
 
-    public function putContentInIndexFile($strContent)
+    public function putContentInIndexFile($strContent, $strWorkingDir)
     {
-        file_put_contents(__DIR__ . "/../index.html", $strContent); 
+        file_put_contents($strWorkingDir . "/index.html", $strContent); 
     }
 
 }
 
 $b = new Build();
-$strIndexContent = $b->parseFile("index.shtml");
-$b->putContentInIndexFile($strIndexContent);
+$strIndexContent = $b->parseFile("index.shtml", $strWorkingDir = getcwd());
+$b->putContentInIndexFile($strIndexContent, $strWorkingDir);

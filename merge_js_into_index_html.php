@@ -2,21 +2,21 @@
 
 class Merge {
     
-    public function getIndexFile($strFile = "index.html")
+    public function getIndexFile($strFile = "index.html", $strWorkingDir)
     {
-        $strPath = __DIR__ . "/../";
+        $strPath = $strWorkingDir . "/";
         $strPath = str_replace(" ", "\ ", $strPath);
         $strContent = file_get_contents($strPath . $strFile);
 
         return $strContent;
     }
 
-    public function parseFile($strFile = "index.html")
+    public function parseFile($strFile = "index.html", $strWorkingDir)
     {
         $strContent = "";
         $arrMatches = [];
         $strFile = preg_replace("/(\?[a-z0-9\=]*)$/i", "", $strFile);
-        $strFilePath = sprintf("%s/../%s", __DIR__, $strFile);
+        $strFilePath = sprintf("%s/%s", $strWorkingDir, $strFile);
         printf("%s\n", $strFilePath);
         $arrResult = [];
         /*
@@ -26,7 +26,7 @@ class Merge {
          */
         if (strstr($strFile, ".js")) {
             exec("echo ''> vlad.js");
-            $strCmd = sprintf("java -jar lib/yuicompressor-2.4.8.jar %s -o vlad.js", str_replace(" ", "\ ", $strFilePath));
+            $strCmd = sprintf("java -jar %s/yuicompressor-2.4.8.jar %s -o vlad.js", __DIR__, str_replace(" ", "\ ", $strFilePath));
             printf("Command to yuicompressor: %s", $strCmd);
             exec($strCmd, $arrResult, $numReturn);
             if ($numReturn) {
@@ -50,7 +50,7 @@ class Merge {
                     $strBuf = trim($strBuf);
                     $numMatches = preg_match("/\<script src\=\"(.*)\"\>\<\/script\>/", $strBuf, $arrMatches);
                     if ($numMatches !== FALSE && $numMatches !== 0) {
-                        $strContent .= sprintf("<script type=\"text/javascript\">%s</script>\n", $this->parseFile($arrMatches[1])); 
+                        $strContent .= sprintf("<script type=\"text/javascript\">%s</script>\n", $this->parseFile($arrMatches[1], $strWorkingDir)); 
                     } else {
                         $strContent .= $strBuf;
                     }
@@ -64,14 +64,14 @@ class Merge {
         return $strContent;
     }
 
-    public function putContentInIndexFile($strContent)
+    public function putContentInIndexFile($strContent, $strWorkingDir)
     {
-        file_put_contents(__DIR__ . "/../index.html", $strContent); 
+        file_put_contents($strWorkingDir . "/index.html", $strContent); 
     }
 
 }
 
 $m = new Merge();
 //$strIndexContent = $m->getIndexFile();
-$strMergedContent = $m->parseFile("index.html");
-$m->putContentInIndexFile($strMergedContent);
+$strMergedContent = $m->parseFile("index.html", $strWorkingDir = getcwd());
+$m->putContentInIndexFile($strMergedContent, $strWorkingDir);
